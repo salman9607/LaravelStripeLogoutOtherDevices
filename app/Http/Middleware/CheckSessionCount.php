@@ -7,6 +7,7 @@ use App\Models\UserSession;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Support\Facades\Crypt;
 
 class CheckSessionCount
 {
@@ -18,9 +19,9 @@ class CheckSessionCount
     public function handle(Request $request, Closure $next): Response
     {
         $allSession = UserSession::where([['user_id', '=', auth()->id()], ['session_id', '!=', session()->getId()]])->get();
-
-        if(!empty($allSession) && count($allSession) >= 2) {
-            auth()->logoutOtherDevices(auth()->user()->password);
+        if(count($allSession) >= 2) {
+            $decrypt = Crypt::decryptString(session()->get('user_pas'));
+            auth()->logoutOtherDevices($decrypt);
 
             UserSession::where([['user_id', '=', auth()->id()], ['session_id', '!=', session()->getId()]])->delete();
 
